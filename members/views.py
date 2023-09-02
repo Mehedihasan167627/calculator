@@ -5,7 +5,18 @@ from .models import MealRequestClose,Meal
 import time
 from datetime import datetime ,timedelta
 import schedule
+import threading
 
+
+class MyThread(threading.Thread):
+    def __init__(self, delay=1):
+        super().__init__()
+        self.delay = delay
+
+    def run(self):
+        while True: 
+            print("called")
+            time.sleep(self.delay)
 
 def job():
     continue_meal=Meal.objects.filter(is_continue=True)
@@ -36,8 +47,9 @@ class MealRequestView(View):
         return render(request,"members/index.html")
     
     def post(self,request):
-        while True:    
-            schedule.run_pending()
-            time.sleep(1) 
+        reader=MyThread(10)
+        reader.start()
+        return JsonResponse({"data":"ok"})
+
 
 
