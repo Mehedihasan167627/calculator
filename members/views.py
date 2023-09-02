@@ -47,7 +47,7 @@ class MealRequestView(View):
         return render(request,"members/index.html")
     
     def post(self,request):
-        reader=MyThread(10)
+        reader=MyThread(30)
         reader.start()
         return JsonResponse({"data":"ok"})
 

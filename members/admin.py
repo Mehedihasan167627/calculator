@@ -46,7 +46,7 @@ class BazarCostAdmin(admin.ModelAdmin):
 
 @admin.register(BazarList)
 class BazarListAdmin(admin.ModelAdmin):
-    list_display = ["member","bazar_done_status","bazar_date","is_bazar_done"]
+    list_display = ["member","bazar_date","bazar_done_status","is_bazar_done"]
     date_hierarchy="bazar_date"           
     list_editable=["is_bazar_done"]
     list_filter=["bazar_date"]
