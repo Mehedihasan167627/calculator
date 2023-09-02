@@ -1,8 +1,8 @@
 from django.db import models
-from django.utils.text import slugify
 from django.utils.html import format_html
 from datetime import datetime,timedelta
-from django.utils import timezone
+from ckeditor.fields import RichTextField
+
 
 class BaseEntity(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
@@ -24,21 +24,37 @@ class Member(BaseEntity):
     def total_meal(self):
         obj=Meal.objects.prefetch_related("member").filter(member__id=self.id)
         details=""
-        m=obj.filter(morning__gt=0).count() /2
-        l=obj.filter(launch__gt=0).count()
-        d=obj.filter(dinner__gt=0).count()
-        r=m+l+d 
+        # single total 
+        morning=0
+        for m in obj.filter(breakfast__gt=0):
+            morning+=m.breakfast
+        launch=0
+        for l in obj.filter(launch__gt=0):
+            launch+=l.launch
+        dinner=0
+        for d in obj.filter(dinner__gt=0):
+            dinner+=d.dinner
+
+        r=morning+launch+dinner
+
         details+=f"<span style='margin-right:30px'>Total meal : <b>{r}</b> </span>"
         deposits=MoneyDeposit.objects.prefetch_related("member").filter(member__id=self.id)
         total=sum([obj.deposit for obj in deposits])
         details+=f"<span>Total Deposit:  <b>{total} tk</b></span></br></br>"
+         
+
 
         meals=Meal.objects.prefetch_related("member").filter(date__month=datetime.now().date().month)
         total_cost=BazarCost.objects.prefetch_related("member").filter(date__month=datetime.now().date().month)
-        m=meals.filter(morning__gt=0).count() /2
-        l=meals.filter(launch__gt=0).count()
-        d=meals.filter(dinner__gt=0).count()
-        total_meal=m+l+d
+        morning,launch,dinner=0,0,0
+        for m in meals.filter(breakfast__gt=0):
+            morning+=m.breakfast
+        for l in meals.filter(launch__gt=0):
+            launch+=m.launch
+        for d in meals.filter(dinner__gt=0):
+            dinner+=m.dinner
+        total_meal=morning+launch+dinner
+
         total_cost=float(sum([obj.total_cost for obj in total_cost]))
         try:
             meal_rate=total_cost/total_meal
@@ -49,10 +65,10 @@ class Member(BaseEntity):
         details+=f"<span style='margin-right:30px'>Total Cost : <b>{single_cost}</b> </span>"
         deposits=MoneyDeposit.objects.prefetch_related("member").filter(member__id=self.id,date__month=datetime.now().date().month)
         total=float(sum([obj.deposit for obj in deposits]))
-        if round(total - single_cost,2) <1:
-            details+=f"<span>Total Balance:  <b style='color:red;font-size:16px';>{round(total - single_cost,2)} tk</b></span></br>"
+        if round(total - float(single_cost),2) <1:
+            details+=f"<span>Total Balance:  <b style='color:red;font-size:16px';>{round(total - float(single_cost),2)} tk</b></span></br>"
         else:
-            details+=f"<span>Total Balance:  <b>{round(total - single_cost,2)} tk</b></span></br></br>"
+            details+=f"<span>Total Balance:  <b>{round(total - float(single_cost),2)} tk</b></span></br></br>"
             
         return format_html(details)
     
@@ -60,10 +76,11 @@ class Member(BaseEntity):
 
 class Meal(BaseEntity):
     member=models.ForeignKey(Member,on_delete=models.CASCADE)
-    morning=models.DecimalField(max_digits=8,decimal_places=2,default=0.5)
-    launch=models.DecimalField(max_digits=8,decimal_places=2,default=1)
-    dinner=models.DecimalField(max_digits=8,decimal_places=2,default=1)
+    breakfast=models.DecimalField(max_digits=8,decimal_places=2,default=0.5,verbose_name="সকাল")
+    launch=models.DecimalField(max_digits=8,decimal_places=2,default=1,verbose_name="দুপুর")
+    dinner=models.DecimalField(max_digits=8,decimal_places=2,default=1,verbose_name="রাত")
     date=models.DateField(default=datetime.now().date()+timedelta(days=1))
+    is_continue=models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return self.member.name
@@ -99,12 +116,16 @@ class MoneyDeposit(BaseEntity):
 
 class BazarCost(BaseEntity):
     member=models.ForeignKey(Member,on_delete=models.CASCADE)
-    description=models.TextField()
+    description=RichTextField()
     total_cost=models.DecimalField(max_digits=8,decimal_places=2)
     date=models.DateField()
 
     def __str__(self) -> str:
         return self.member.name
+    
+
+    def get_description(self):
+        return format_html(self.description)
 
 
 
@@ -119,3 +140,9 @@ class Fine(BaseEntity):
     
 
 
+
+class MealRequestClose(models.Model):
+    time=models.CharField(max_length=255,help_text="10:20")
+
+    def __str__(self) -> str:
+        return self.time 

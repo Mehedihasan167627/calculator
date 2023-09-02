@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import Member,Meal,MoneyDeposit,Fine,BazarCost,BazarList
-
+from .models import Member,Meal,MoneyDeposit,Fine,BazarCost,BazarList,MealRequestClose
 
 
 class MealTabularInline(admin.TabularInline):
@@ -20,9 +19,11 @@ class MemberAdmin(admin.ModelAdmin):
 
 @admin.register(Meal)
 class MealAdmin(admin.ModelAdmin):
-    list_display = ["member","morning","launch","dinner","date","created_at"]
+    list_display = ["member","breakfast","launch","dinner","date","is_continue"]
     list_filter=["member","date"]
-    search_fields=["member","date"]
+    date_hierarchy="date"
+    search_fields=["member__name","date"]
+    list_editable=["is_continue"]
 
 
 
@@ -39,12 +40,21 @@ class FineAdmin(admin.ModelAdmin):
 
 @admin.register(BazarCost)
 class BazarCostAdmin(admin.ModelAdmin):
-    list_display = ["member","total_cost","date"]
+    list_display = ["member","get_description","total_cost","date"]
 
 
 
 @admin.register(BazarList)
 class BazarListAdmin(admin.ModelAdmin):
-    list_display = ["member","is_bazar_done",
-                "bazar_done_status","bazar_date",]
+    list_display = ["member","bazar_done_status","bazar_date","is_bazar_done"]
+    date_hierarchy="bazar_date"           
     list_editable=["is_bazar_done"]
+    list_filter=["bazar_date"]
+
+
+
+
+@admin.register(MealRequestClose)
+class MealRequestCloseAdmin(admin.ModelAdmin):
+    list_display=["id","time"]
+    list_editable=["time"]
