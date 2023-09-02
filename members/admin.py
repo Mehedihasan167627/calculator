@@ -19,7 +19,7 @@ class MemberAdmin(admin.ModelAdmin):
 
 @admin.register(Meal)
 class MealAdmin(admin.ModelAdmin):
-    list_display = ["member","breakfast","launch","dinner","date","is_continue"]
+    list_display = ["member","breakfast","launch","dinner","date","already_added","is_continue"]
     list_filter=["member","date"]
     date_hierarchy="date"
     search_fields=["member__name","date"]

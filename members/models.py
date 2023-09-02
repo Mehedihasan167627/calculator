@@ -84,6 +84,12 @@ class Meal(BaseEntity):
 
     def __str__(self) -> str:
         return self.member.name
+    
+    @property
+    def already_added(self):
+        if datetime.now().date()+timedelta(days=1)==self.date: 
+            return format_html("<p style='color:green'>already added</p>")
+        return format_html("<p style='color:red'>pending...</p>")
 
 
 class BazarList(BaseEntity):
